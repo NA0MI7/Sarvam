@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BillSamjho</title>
+<style>
+:root{--bg:#eef2f7;--card:#fff;--ink:#14213d;--mut:#5b6679;--line:#d6dde8;--me:#2f3e9e;--meink:#fff;--hi:#f2a900;--hibg:#fff4d6;--err:#b42318}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1524;--card:#18203a;--ink:#e6ebf7;--mut:#9aa6c0;--line:#2a3558;--me:#5468e0;--hibg:#3a2f10;--err:#ffb4a8}}
+:root[data-theme="dark"]{--bg:#0f1524;--card:#18203a;--ink:#e6ebf7;--mut:#9aa6c0;--line:#2a3558;--me:#5468e0;--hibg:#3a2f10;--err:#ffb4a8}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+:root{padding-top:env(safe-area-inset-top,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{display:flex;flex-direction:column;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI","Noto Sans Devanagari","Noto Sans Bengali","Noto Sans Gurmukhi",Roboto,sans-serif}
+header{padding:10px 14px;background:var(--card);border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;justify-content:space-between}
+h1{font-size:1.25rem;margin:0}h1 b{color:var(--me)}
+select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.note{background:var(--hibg);padding:6px 14px;font-size:.85rem;border-bottom:1px solid var(--line)}
+#chat{flex:1;overflow-y:auto;padding:14px;max-width:760px;width:100%;margin:0 auto}
+.m{max-width:92%;padding:10px 13px;border-radius:14px;margin:8px 0;overflow-wrap:anywhere}
+.bot{background:var(--card);border:1px solid var(--line);border-top-left-radius:4px}
+.me{background:var(--me);color:var(--meink);margin-left:auto;border-top-right-radius:4px;white-space:pre-wrap}
+.m ul{margin:6px 0;padding-left:20px}.m p{margin:6px 0}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+button{font:inherit;font-weight:600;border-radius:999px;border:1.5px solid var(--me);background:var(--card);color:var(--me);padding:8px 16px;cursor:pointer}
+button.p{background:var(--me);color:var(--meink)}
+button:disabled{opacity:.5}
+.err{color:var(--err)}
+.tools button.on{background:var(--me);color:var(--meink)}
+textarea.l{width:100%;min-height:320px;font:inherit;font-size:.95rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px}
+form{background:var(--card);border-top:1px solid var(--line);padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px))}
+.in{max-width:760px;margin:0 auto;display:flex;gap:8px;align-items:flex-end}
+#t{flex:1;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:9px 11px;resize:none;max-height:140px}
+.tools{max-width:760px;margin:0 auto 6px;display:flex;gap:10px;align-items:center;font-size:.85rem;color:var(--mut);flex-wrap:wrap}
+.tools button{padding:3px 12px;font-size:.85rem}
+footer{font-size:.78rem;color:var(--mut);text-align:center;padding:4px 8px 2px}
+</style></head><body>
+<header><h1>Bill<b>Samjho</b></h1>
+<select id="lang" aria-label="Language"><option>English</option><option value="Hindi">हिन्दी</option><option value="Bengali">বাংলা</option><option value="Punjabi">ਪੰਜਾਬੀ</option><option value="Marathi">मराठी</option></select></header>
+<div class="note" id="note">Use sample or redacted data only while testing. Nothing is saved.</div>
+<div id="chat"></div>
+<form id="f">
+<div class="tools"><button type="button" id="att">📎 Attach file</button><span id="fn"></span><button type="button" id="mic" title="Speak your message" aria-label="Speak your message">🎤</button><button type="button" id="spk" title="Read replies aloud" aria-label="Read replies aloud" aria-pressed="false">🔊</button><button type="button" id="smp">Try sample data</button></div>
+<div class="in"><textarea id="t" rows="2" placeholder="Paste your hospital bill here, or attach a photo"></textarea><button class="p" id="go">Send</button></div>
+<input type="file" id="file" accept="image/*,application/pdf,.txt" hidden>
+<footer id="foot">Explanation tool only, not legal, medical or insurance advice.</footer>
+</form>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const T={
+English:{y:"Yes",n:"No",pol:"Please upload your insurance policy (PDF, photo or text), or paste the key clauses, then press Send.",dec:"Please upload the insurer’s decision letter (PDF, photo or text), or paste it, then press Send.",noIns:"Okay. Please ask the hospital the questions above before you pay. You can still ask me anything about your bill.",noDec:"Okay. When your insurer decides, come back and upload the letter. I will check it against your policy.",draft:"Draft complaint letter",copy:"Copy",copied:"Copied"},
+Hindi:{y:"हाँ",n:"नहीं",pol:"कृपया अपनी बीमा पॉलिसी अपलोड करें (फोटो या टेक्स्ट) या मुख्य शर्तें पेस्ट करें, फिर Send दबाएँ।",dec:"कृपया बीमा कंपनी का निर्णय पत्र अपलोड करें (फोटो या टेक्स्ट) या पेस्ट करें, फिर Send दबाएँ।",noIns:"ठीक है। पैसे देने से पहले ऊपर के सवाल अस्पताल से पूछ लें। आप बिल के बारे में मुझसे कुछ भी पूछ सकते हैं।",noDec:"ठीक है। जब बीमा कंपनी निर्णय दे, पत्र यहाँ अपलोड करें। मैं उसे आपकी पॉलिसी से मिलाकर देखूँगा।",draft:"शिकायत पत्र बनाएँ",copy:"कॉपी करें",copied:"कॉपी हो गया"},
+Bengali:{y:"হ্যাঁ",n:"না",pol:"অনুগ্রহ করে আপনার বিমা পলিসি আপলোড করুন (ছবি বা টেক্সট) অথবা মূল শর্তগুলো পেস্ট করুন, তারপর Send চাপুন।",dec:"অনুগ্রহ করে বিমা কোম্পানির সিদ্ধান্তের চিঠি আপলোড বা পেস্ট করুন, তারপর Send চাপুন।",noIns:"ঠিক আছে। টাকা দেওয়ার আগে উপরের প্রশ্নগুলো হাসপাতালকে জিজ্ঞাসা করুন। বিল নিয়ে আমাকে যেকোনো প্রশ্ন করতে পারেন।",noDec:"ঠিক আছে। বিমা কোম্পানি সিদ্ধান্ত জানালে চিঠিটি এখানে আপলোড করুন। আমি আপনার পলিসির সঙ্গে মিলিয়ে দেখব।",draft:"অভিযোগ পত্র তৈরি করুন",copy:"কপি করুন",copied:"কপি হয়েছে"},
+Punjabi:{y:"ਹਾਂ",n:"ਨਹੀਂ",pol:"ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੀ ਬੀਮਾ ਪਾਲਿਸੀ ਅੱਪਲੋਡ ਕਰੋ (ਫੋਟੋ ਜਾਂ ਟੈਕਸਟ) ਜਾਂ ਮੁੱਖ ਸ਼ਰਤਾਂ ਪੇਸਟ ਕਰੋ, ਫਿਰ Send ਦਬਾਓ।",dec:"ਕਿਰਪਾ ਕਰਕੇ ਬੀਮਾ ਕੰਪਨੀ ਦਾ ਫ਼ੈਸਲੇ ਵਾਲਾ ਪੱਤਰ ਅੱਪਲੋਡ ਜਾਂ ਪੇਸਟ ਕਰੋ, ਫਿਰ Send ਦਬਾਓ।",noIns:"ਠੀਕ ਹੈ। ਪੈਸੇ ਦੇਣ ਤੋਂ ਪਹਿਲਾਂ ਉੱਪਰ ਦੇ ਸਵਾਲ ਹਸਪਤਾਲ ਤੋਂ ਪੁੱਛ ਲਓ। ਤੁਸੀਂ ਬਿੱਲ ਬਾਰੇ ਮੈਨੂੰ ਕੁਝ ਵੀ ਪੁੱਛ ਸਕਦੇ ਹੋ।",noDec:"ਠੀਕ ਹੈ। ਜਦੋਂ ਬੀਮਾ ਕੰਪਨੀ ਫ਼ੈਸਲਾ ਦੇਵੇ, ਪੱਤਰ ਇੱਥੇ ਅੱਪਲੋਡ ਕਰੋ। ਮੈਂ ਇਸਨੂੰ ਤੁਹਾਡੀ ਪਾਲਿਸੀ ਨਾਲ ਮਿਲਾ ਕੇ ਵੇਖਾਂਗਾ।",draft:"ਸ਼ਿਕਾਇਤ ਪੱਤਰ ਬਣਾਓ",copy:"ਕਾਪੀ ਕਰੋ",copied:"ਕਾਪੀ ਹੋ ਗਿਆ"},
+Marathi:{y:"होय",n:"नाही",pol:"कृपया तुमची विमा पॉलिसी अपलोड करा (फोटो किंवा टेक्स्ट) किंवा मुख्य अटी पेस्ट करा, मग Send दाबा.",dec:"कृपया विमा कंपनीचे निर्णय पत्र अपलोड करा किंवा पेस्ट करा, मग Send दाबा.",noIns:"ठीक आहे. पैसे देण्यापूर्वी वरील प्रश्न रुग्णालयाला विचारा. बिलाबद्दल तुम्ही मला काहीही विचारू शकता.",noDec:"ठीक आहे. विमा कंपनीने निर्णय दिला की पत्र इथे अपलोड करा. मी ते तुमच्या पॉलिसीशी पडताळून पाहीन.",draft:"तक्रार पत्र तयार करा",copy:"कॉपी करा",copied:"कॉपी झाले"}};
+const tr=k=>T[$("lang").value][k];
+
+const SAMPLE={
+bill:`CITY CARE HOSPITAL, Varanasi - FINAL BILL (sample)
+Patient: Ramesh Kumar   Admission: 12-10-2026   Discharge: 15-10-2026 (3 days)
+1. Room rent - Deluxe room, 3 days x Rs 5,000 = Rs 15,000
+2. Doctor visit charges, 3 days x Rs 1,500 = Rs 4,500
+3. CBC (Complete Blood Count) 13-10-2026 = Rs 450
+4. CBC (Complete Blood Count) 13-10-2026 = Rs 450
+5. Blood sugar test = Rs 200
+6. X-ray chest = Rs 800
+7. Medicines and consumables = Rs 12,350
+8. Nursing charges, 3 days = Rs 2,400
+9. Service charge = Rs 1,800
+10. Registration fee = Rs 500
+11. Miscellaneous charges = Rs 1,500
+TOTAL BILL AMOUNT: Rs 39,950`,
+policy:`ABC Health Insurance - Policy summary (sample)
+Sum insured: Rs 3,00,000. Room rent limit: Rs 3,000 per day. If a costlier room is taken, room-linked expenses (doctor fees, nursing) are paid in the same proportion as the eligible room rent. Registration, service and administrative charges are not payable. Duplicate tests are not payable.`,
+decision:`ABC Health Insurance - Claim Settlement Letter
+Claim No. CLM/2026/778812   Policy No. HP/45/998
+Amount claimed: Rs 39,950   Amount settled: Rs 26,940   Total deducted: Rs 13,010
+Deductions:
+- Room rent above limit (Rs 5,000 taken vs Rs 3,000 eligible per day, 3 days): Rs 6,000
+- Proportionate deduction on doctor visit charges (60% ratio): Rs 1,800
+- Proportionate deduction on nursing charges (60% ratio): Rs 960
+- Registration fee, non-payable: Rs 500
+- Service charge, non-payable: Rs 1,800
+- Miscellaneous charges, non-payable: Rs 1,500
+- Duplicate investigation (CBC): Rs 450`};
+
+const STEP={
+bill:"STEP 1. Explain this hospital bill in very simple words. Give: (a) a 2-3 sentence summary; (b) every charge as a bullet: name - amount in Rs - what it means in one line; (c) check whether the charges add up to the printed total and show your sum; (d) a list called 'Worth asking the hospital' with duplicates, vague charges and anything unclear, each with a short reason. End by asking: Do you have health insurance?",
+policy:"STEP 2. The attached or pasted content is the person's insurance policy. Using ONLY the policy and the bill earlier in this chat, explain for each bill item whether the policy may cover it, may not cover it, or is unclear, and why (room-rent limit, proportionate deduction, co-pay, waiting period, non-payable items, only if they appear in the policy). Give a rough estimate of what the insurer may pay and may not pay, with the simple arithmetic and your assumptions. List anything missing. End by asking: Has your insurer already given a decision on this claim?",
+decision:"STEP 3. The attached or pasted content is the insurer's decision letter. Compare it with the policy and the bill from earlier in this chat. List each deduction or rejection with its amount, the insurer's reason, and a verdict: 'looks consistent with the policy', 'may be disputable because...' or 'unclear'. Clearly point out items that do not seem to align with the policy. Check that paid + deducted = claimed. End by saying you can draft a complaint letter to the insurer.",
+complaint:"Draft a polite complaint letter to the insurer's Grievance Redressal Officer about the deductions that may be disputable (and ask for written reasons for unclear ones). Use placeholders [Name], [Policy No.], [Claim No.], [Date], [Hospital Name]. No threats and no fraud claims. Put ONLY the letter between a line <<<LETTER and a line LETTER>>>. After it, explain in simple words the next steps if the insurer does not fix it: insurer Grievance Redressal Officer, then IRDAI Bima Bharosa portal, then Insurance Ombudsman, then consumer court. Do not quote phone numbers or deadlines; say to check official websites.",
+chat:""};
+const SYS=l=>`You are BillSamjho, a friendly chatbot that explains Indian hospital bills and health-insurance claims.
+RULES: Never accuse the hospital of fraud; say "worth asking about". Never say a rejection or deduction is definitely right or wrong; say "may be valid" or "may be disputable because...". Use ONLY what the person provided in this chat; flag anything unclear or missing instead of guessing; never invent amounts or policy terms. Use very simple words (Class 8 level) and short sentences. Reply entirely in ${l}. Use bullets with "- " and **bold** only. No tables, no headings. You can also chat normally: greet back, say thanks, and answer general questions briefly and kindly in short, easy-to-listen-to sentences, and gently remind them they can share their bill when it fits. For medical, legal or insurance questions give general information only and say it is not professional advice. Never pretend to have seen a bill, policy or letter that was not shared.`;
+
+let stage="bill",msgs=[],busy=false,pending=null,sampleOn=false;
+const chat=$("chat");
+function md(s){let h="",ul=false;for(const raw of s.split("\n")){let l=raw.trim();const b=/^[-•*]\s+/.test(l);if(b){l=l.replace(/^[-•*]\s+/,"");if(!ul){h+="<ul>";ul=true}}else if(ul){h+="</ul>";ul=false}
+l=esc(l.replace(/^#+\s*/,"")).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>");h+=b?"<li>"+l+"</li>":(l?"<p>"+l+"</p>":"")}return h+(ul?"</ul>":"")}
+function add(cls,html){const d=document.createElement("div");d.className="m "+cls;d.innerHTML=html;chat.appendChild(d);chat.scrollTop=chat.scrollHeight;if(cls==="bot"&&voiceOn&&html!=="…"&&!html.includes("<textarea"))speak(d.textContent);return d}
+function chips(list){const d=document.createElement("div");d.className="chips";list.forEach(([t,fn])=>{const b=document.createElement("button");b.type="button";b.textContent=t;b.onclick=()=>{d.remove();fn()};d.appendChild(b)});chat.appendChild(d);chat.scrollTop=chat.scrollHeight}
+function ph(){$("t").placeholder=U[$("lang").value][{bill:"pb",policy:"pp",decision:"pd"}[stage]||"pc"]}
+
+function toB64(f){return new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result.split(",")[1]);r.onerror=no;r.readAsDataURL(f)})}
+async function fileBlock(f){
+  if(f.type==="application/pdf")return{type:"document",source:{type:"base64",media_type:"application/pdf",data:await toB64(f)}};
+  if(f.type.startsWith("image/")){const u=URL.createObjectURL(f),im=new Image();await new Promise((a,b)=>{im.onload=a;im.onerror=b;im.src=u});const k=Math.min(1,1600/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=im.width*k;c.height=im.height*k;c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);return{type:"image",source:{type:"base64",media_type:"image/jpeg",data:c.toDataURL("image/jpeg",.85).split(",")[1]}}}
+  return{type:"text",text:"[File "+f.name+"]\n"+await f.text()}}
+
+async function call(blocks,instr,after){
+  busy=true;$("go").disabled=true;
+  const lang=$("lang").value;
+  msgs.push({role:"user",content:[...blocks,{type:"text",text:instr}]});
+  const w=add("bot","…");
+  try{
+    const r=await fetch("/api/chat",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({system:SYS(lang),messages:msgs})});
+    const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||"Request failed");
+    msgs.push({role:"assistant",content:[{type:"text",text:j.text}]});
+    w.remove();after(j.text);
+  }catch(e){msgs.pop();w.className="m bot err";w.textContent="Sorry, something went wrong: "+e.message+" You can press Send to try again.";pending={blocks,instr,after}}
+  busy=false;$("go").disabled=false;
+}
+const botReply=t=>add("bot",md(t));
+
+function askYesNo(yes,no){chips([[tr("y"),yes],[tr("n"),no]])}
+function afterBill(t){botReply(t);stage="askIns";ph();askYesNo(()=>{add("me",tr("y"));stage="policy";ph();add("bot",esc(tr("pol")))},()=>{add("me",tr("n"));add("bot",esc(tr("noIns")));stage="chat";ph()})}
+function afterPolicy(t){botReply(t);stage="askDec";ph();askYesNo(()=>{add("me",tr("y"));stage="decision";ph();add("bot",esc(tr("dec")))},()=>{add("me",tr("n"));add("bot",esc(tr("noDec")));stage="chat";ph()})}
+function afterDecision(t){botReply(t);stage="chat";ph();chips([[tr("draft"),draftComplaint]])}
+function afterChat(t){botReply(t)}
+function draftComplaint(){add("me",tr("draft"));call([],STEP.complaint,t=>{
+  const m=t.match(/<<<LETTER\s*([\s\S]*?)\s*LETTER>>>/);
+  if(!m){botReply(t);return}
+  const rest=t.replace(m[0],"").trim();
+  const d=add("bot",'<textarea class="l"></textarea><div class="chips"><button type="button" class="p">'+esc(tr("copy"))+'</button></div>');
+  const ta=d.querySelector("textarea");ta.value=m[1];
+  d.querySelector("button").onclick=async function(){try{await navigator.clipboard.writeText(ta.value)}catch(e){ta.select();document.execCommand("copy")}this.textContent=tr("copied");setTimeout(()=>this.textContent=tr("copy"),1800)};
+  if(rest)botReply(rest);chat.scrollTop=chat.scrollHeight})}
+
+$("att").onclick=()=>$("file").click();
+$("file").onchange=()=>{$("fn").textContent=$("file").files[0]?$("file").files[0].name:""};
+$("smp").onclick=()=>{const k={bill:"bill",policy:"policy",decision:"decision"}[stage];if(!k){$("t").value="";return}$("t").value=SAMPLE[k]};
+
+$("f").onsubmit=async e=>{
+  e.preventDefault();if(busy)return;
+  if(pending&&($("t").value.trim()||$("file").files[0]))pending=null;if(pending){const p=pending;pending=null;chat.lastChild&&chat.lastChild.classList.contains("err")&&chat.lastChild.remove();return call(p.blocks,p.instr,p.after)}
+  const txt=$("t").value.trim(),f=$("file").files[0];
+  if(!txt&&!f)return;
+  if((stage==="askIns"||stage==="askDec")&&!f){const k=YN.y.test(txt)?0:YN.n.test(txt)?1:-1,bs=chat.querySelectorAll(".chips button");if(k>=0&&bs[k]){$("t").value="";bs[k].click();return}}
+  const blocks=[];
+  try{if(f)blocks.push(await fileBlock(f))}catch(err){add("bot err","Could not read that file. Try a PDF, a photo or a .txt file.");return}
+  add("me",esc((f?"📎 "+f.name+"\n":"")+txt.slice(0,600)+(txt.length>600?"…":"")));
+  $("t").value="";$("file").value="";$("fn").textContent="";
+  const label={bill:"HOSPITAL BILL",policy:"INSURANCE POLICY",decision:"INSURER DECISION LETTER"}[stage];
+  if(stage==="bill"||stage==="policy"||stage==="decision"){
+    const body=(label+(txt?":\n"+txt:" (attached)"));
+    {const af={bill:afterBill,policy:afterPolicy,decision:afterDecision}[stage],R=/^\s*\[\[(DOC|CHAT)\]\]\s*/i;call(blocks,MARK+STEP[stage]+"\n\n"+body,t=>{const m=R.exec(t),c=t.replace(R,"");m&&m[1].toUpperCase()==="CHAT"?afterChat(c):af(c)})}
+  }else call(blocks,txt||"Please look at the attached file.",afterChat);
+};
+$("t").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey&&matchMedia("(hover:hover)").matches){e.preventDefault();$("f").requestSubmit()}});
+var welcome=add("bot",md("Namaste! I am BillSamjho. I explain hospital bills and insurance decisions in simple words.\n- Pick your language at the top.\n- **Step 1:** paste your hospital bill below, or attach a photo.\n- Then I will ask about your insurance, and help you check the insurer’s decision.\n- You can also tap **Try sample data**."));
+const U={
+English:{note:"Use sample or redacted data only while testing. Nothing is saved.",att:"📎 Attach file",smp:"Try sample data",send:"Send",pb:"Paste your hospital bill here, or attach a photo",pp:"Attach your policy, or paste key clauses",pd:"Attach the insurer’s letter, or paste its text",pc:"Ask me anything about your bill",foot:"Explanation tool only, not legal, medical or insurance advice."},
+Hindi:{note:"टेस्टिंग में केवल सैंपल या छिपाई गई (redacted) जानकारी इस्तेमाल करें। कुछ भी सेव नहीं होता।",att:"📎 फ़ाइल जोड़ें",smp:"सैंपल डेटा आज़माएँ",send:"भेजें",pb:"अपना अस्पताल का बिल यहाँ पेस्ट करें, या फोटो जोड़ें",pp:"अपनी पॉलिसी जोड़ें, या मुख्य शर्तें पेस्ट करें",pd:"बीमा कंपनी का पत्र जोड़ें, या उसका टेक्स्ट पेस्ट करें",pc:"अपने बिल के बारे में कुछ भी पूछें",foot:"सिर्फ़ समझाने वाला टूल है, कानूनी, चिकित्सा या बीमा सलाह नहीं।"},
+Bengali:{note:"পরীক্ষার সময় শুধু নমুনা বা গোপন করা (redacted) তথ্য ব্যবহার করুন। কিছুই সংরক্ষিত হয় না।",att:"📎 ফাইল যোগ করুন",smp:"নমুনা ডেটা চেষ্টা করুন",send:"পাঠান",pb:"আপনার হাসপাতালের বিল এখানে পেস্ট করুন, বা ছবি যোগ করুন",pp:"আপনার পলিসি যোগ করুন, বা মূল শর্তগুলো পেস্ট করুন",pd:"বিমা কোম্পানির চিঠি যোগ করুন, বা তার লেখা পেস্ট করুন",pc:"আপনার বিল নিয়ে যেকোনো প্রশ্ন করুন",foot:"শুধু বোঝানোর টুল, আইনি, চিকিৎসা বা বিমা পরামর্শ নয়।"},
+Punjabi:{note:"ਟੈਸਟਿੰਗ ਦੌਰਾਨ ਸਿਰਫ਼ ਨਮੂਨਾ ਜਾਂ ਲੁਕਾਈ ਹੋਈ (redacted) ਜਾਣਕਾਰੀ ਵਰਤੋ। ਕੁਝ ਵੀ ਸੇਵ ਨਹੀਂ ਹੁੰਦਾ।",att:"📎 ਫ਼ਾਈਲ ਜੋੜੋ",smp:"ਨਮੂਨਾ ਡੇਟਾ ਅਜ਼ਮਾਓ",send:"ਭੇਜੋ",pb:"ਆਪਣਾ ਹਸਪਤਾਲ ਦਾ ਬਿੱਲ ਇੱਥੇ ਪੇਸਟ ਕਰੋ, ਜਾਂ ਫੋਟੋ ਜੋੜੋ",pp:"ਆਪਣੀ ਪਾਲਿਸੀ ਜੋੜੋ, ਜਾਂ ਮੁੱਖ ਸ਼ਰਤਾਂ ਪੇਸਟ ਕਰੋ",pd:"ਬੀਮਾ ਕੰਪਨੀ ਦਾ ਪੱਤਰ ਜੋੜੋ, ਜਾਂ ਉਸਦਾ ਟੈਕਸਟ ਪੇਸਟ ਕਰੋ",pc:"ਆਪਣੇ ਬਿੱਲ ਬਾਰੇ ਕੁਝ ਵੀ ਪੁੱਛੋ",foot:"ਸਿਰਫ਼ ਸਮਝਾਉਣ ਵਾਲਾ ਟੂਲ, ਕਾਨੂੰਨੀ, ਡਾਕਟਰੀ ਜਾਂ ਬੀਮਾ ਸਲਾਹ ਨਹੀਂ।"},
+Marathi:{note:"चाचणी करताना फक्त नमुना किंवा लपवलेली (redacted) माहिती वापरा. काहीही साठवले जात नाही.",att:"📎 फाइल जोडा",smp:"नमुना डेटा वापरून पहा",send:"पाठवा",pb:"तुमचे रुग्णालयाचे बिल इथे पेस्ट करा, किंवा फोटो जोडा",pp:"तुमची पॉलिसी जोडा, किंवा मुख्य अटी पेस्ट करा",pd:"विमा कंपनीचे पत्र जोडा, किंवा त्याचा मजकूर पेस्ट करा",pc:"तुमच्या बिलाबद्दल काहीही विचारा",foot:"फक्त समजावून सांगणारे साधन, कायदेशीर, वैद्यकीय किंवा विमा सल्ला नाही."}};
+const W={
+Hindi:"नमस्ते! मैं BillSamjho हूँ। मैं अस्पताल के बिल और बीमा के फ़ैसले आसान शब्दों में समझाता हूँ।\n- ऊपर से अपनी भाषा चुनें।\n- **स्टेप 1:** नीचे अपना अस्पताल का बिल पेस्ट करें, या फोटो जोड़ें।\n- फिर मैं आपके बीमा के बारे में पूछूँगा और बीमा कंपनी का फ़ैसला जाँचने में मदद करूँगा।\n- आप **सैंपल डेटा आज़माएँ** भी दबा सकते हैं।",
+Bengali:"নমস্কার! আমি BillSamjho। আমি হাসপাতালের বিল ও বিমার সিদ্ধান্ত সহজ ভাষায় বুঝিয়ে দিই।\n- উপরে আপনার ভাষা বেছে নিন।\n- **ধাপ ১:** নিচে আপনার হাসপাতালের বিল পেস্ট করুন, বা ছবি যোগ করুন।\n- তারপর আমি আপনার বিমা নিয়ে জিজ্ঞাসা করব এবং বিমা কোম্পানির সিদ্ধান্ত যাচাই করতে সাহায্য করব।\n- **নমুনা ডেটা চেষ্টা করুন** বোতামও চাপতে পারেন।",
+Punjabi:"ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ BillSamjho ਹਾਂ। ਮੈਂ ਹਸਪਤਾਲ ਦੇ ਬਿੱਲ ਅਤੇ ਬੀਮੇ ਦੇ ਫ਼ੈਸਲੇ ਸੌਖੇ ਸ਼ਬਦਾਂ ਵਿੱਚ ਸਮਝਾਉਂਦਾ ਹਾਂ।\n- ਉੱਪਰੋਂ ਆਪਣੀ ਭਾਸ਼ਾ ਚੁਣੋ।\n- **ਕਦਮ 1:** ਹੇਠਾਂ ਆਪਣਾ ਹਸਪਤਾਲ ਦਾ ਬਿੱਲ ਪੇਸਟ ਕਰੋ, ਜਾਂ ਫੋਟੋ ਜੋੜੋ।\n- ਫਿਰ ਮੈਂ ਤੁਹਾਡੇ ਬੀਮੇ ਬਾਰੇ ਪੁੱਛਾਂਗਾ ਅਤੇ ਬੀਮਾ ਕੰਪਨੀ ਦਾ ਫ਼ੈਸਲਾ ਜਾਂਚਣ ਵਿੱਚ ਮਦਦ ਕਰਾਂਗਾ।\n- ਤੁਸੀਂ **ਨਮੂਨਾ ਡੇਟਾ ਅਜ਼ਮਾਓ** ਵੀ ਦਬਾ ਸਕਦੇ ਹੋ।",
+Marathi:"नमस्कार! मी BillSamjho आहे. मी रुग्णालयाची बिले आणि विम्याचे निर्णय सोप्या शब्दांत समजावतो.\n- वरून तुमची भाषा निवडा.\n- **पायरी १:** खाली तुमचे रुग्णालयाचे बिल पेस्ट करा, किंवा फोटो जोडा.\n- मग मी तुमच्या विम्याबद्दल विचारेन आणि विमा कंपनीचा निर्णय तपासायला मदत करेन.\n- तुम्ही **नमुना डेटा वापरून पहा** हे बटणही दाबू शकता."};
+const welcomeEn=welcome.innerHTML;
+function applyLang(){const l=$("lang").value,u=U[l];$("note").textContent=u.note;$("att").textContent=u.att;$("smp").textContent=u.smp;$("go").textContent=u.send;$("foot").innerHTML=esc(u.foot)+(l==="English"?"":"<br>Explanation tool only, not legal, medical or insurance advice.");document.documentElement.lang={English:"en",Hindi:"hi",Bengali:"bn",Punjabi:"pa",Marathi:"mr"}[l];ph();if(welcome.isConnected)welcome.innerHTML=l==="English"?welcomeEn:md(W[l])}
+$("lang").onchange=applyLang;
+const LC={English:"en-IN",Hindi:"hi-IN",Bengali:"bn-IN",Punjabi:"pa-IN",Marathi:"mr-IN"};
+var voiceOn=false;
+function speak(t){if(!window.speechSynthesis)return;speechSynthesis.cancel();
+  const lc=LC[$("lang").value],vs=speechSynthesis.getVoices(),v=vs.find(x=>x.lang.replace("_","-")===lc)||vs.find(x=>x.lang.toLowerCase().startsWith(lc.slice(0,2)));
+  const parts=t.replace(/[*#_`]/g,"").replace(/^\s*[-•]\s+/gm,"").match(/[^.!?।\n]+[.!?।]?/g)||[];
+  let buf="";const q=[];parts.forEach(p=>{if((buf+p).length>180){if(buf)q.push(buf);buf=p}else buf+=p});if(buf)q.push(buf);
+  q.forEach(s=>{if(!s.trim())return;const u=new SpeechSynthesisUtterance(s.trim());u.lang=lc;if(v)u.voice=v;u.rate=.95;speechSynthesis.speak(u)})}
+$("spk").onclick=()=>{voiceOn=!voiceOn;$("spk").classList.toggle("on",voiceOn);$("spk").setAttribute("aria-pressed",voiceOn);if(!voiceOn&&window.speechSynthesis)speechSynthesis.cancel()};
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null;
+$("mic").onclick=()=>{
+  if(!SR){add("bot err","Voice input is not supported in this browser. Try Chrome or Edge.");return}
+  if(rec){rec.stop();return}
+  rec=new SR();rec.lang=LC[$("lang").value];rec.interimResults=true;rec.continuous=false;
+  const base=$("t").value?$("t").value+" ":"";let fin="";
+  rec.onresult=e=>{let it="";for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i];if(r.isFinal)fin+=r[0].transcript+" ";else it+=r[0].transcript}$("t").value=base+fin+it};
+  rec.onerror=e=>{add("bot err",e.error==="not-allowed"||e.error==="service-not-allowed"?"Microphone access is blocked here. Allow the microphone for this page, or open the page in its own browser tab, then try again.":"Voice input stopped: "+e.error)};
+  rec.onend=()=>{rec=null;if($("t").value.trim()!==base.trim())setTimeout(()=>$("f").requestSubmit(),150);$("mic").classList.remove("on");$("mic").setAttribute("aria-pressed","false")};
+  if(!voiceOn)$("spk").click();rec.start();$("mic").classList.add("on");$("mic").setAttribute("aria-pressed","true")};
+const MARK="First decide whether the content below really is what this step needs (a hospital bill, policy or insurer letter, or an attached file of it). If YES, begin your reply with the line [[DOC]] and follow the step. If it is NOT (for example a greeting, thanks, a question or general talk), begin your reply with the line [[CHAT]] and reply conversationally instead: do not follow the step and do not ask the step's closing question.\n\n";
+const YN={y:/^(yes|yeah|yep|y|haan|han|ha|हाँ|हां|हा|হ্যাঁ|হ্যা|ਹਾਂ|होय|हो)[.!\s]*$/i,n:/^(no|nope|nahi|nahin|नहीं|नही|না|ਨਹੀਂ|नाही)[.!\s]*$/i};
+</script>
+</body></html>

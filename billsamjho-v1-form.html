@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BillSamjho</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f7f4;--card:#fff;--ink:#1c2420;--mut:#5d6b64;--line:#dde3de;--acc:#0f766e;--accink:#fff;--warn:#92400e;--warnbg:#fef3c7;--ok:#166534;--okbg:#dcfce7;--maybe:#9a3412;--maybebg:#ffedd5;--unc:#374151;--uncbg:#e5e7eb;--err:#b91c1c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#111715;--card:#19211e;--ink:#e8efeb;--mut:#9fb0a7;--line:#2d3a35;--acc:#2dd4bf;--accink:#06201c;--warn:#fbbf24;--warnbg:#3b2a0a;--ok:#86efac;--okbg:#12331f;--maybe:#fdba74;--maybebg:#3a2410;--unc:#cbd5d1;--uncbg:#2a3330;--err:#fca5a5}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#111715;--card:#19211e;--ink:#e8efeb;--mut:#9fb0a7;--line:#2d3a35;--acc:#2dd4bf;--accink:#06201c;--warn:#fbbf24;--warnbg:#3b2a0a;--ok:#86efac;--okbg:#12331f;--maybe:#fdba74;--maybebg:#3a2410;--unc:#cbd5d1;--uncbg:#2a3330;--err:#fca5a5}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI","Noto Sans Devanagari","Noto Sans Bengali","Noto Sans Gurmukhi",Roboto,sans-serif}
+.wrap{max-width:780px;margin:0 auto;padding:16px}
+h1{margin:4px 0 2px;font-size:1.7rem}h1 span{color:var(--acc)}
+.tag{color:var(--mut);margin:0 0 12px}
+h2{font-size:1.1rem;margin:0 0 8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0}
+.notice{background:var(--warnbg);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:.92rem}
+label{display:block;font-weight:600;margin:12px 0 4px;font-size:.95rem}
+label small{font-weight:400;color:var(--mut)}
+textarea,input[type=number],select{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px}
+textarea{min-height:120px;resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1 1 150px}
+button{font:inherit;font-weight:600;border-radius:10px;border:1px solid var(--acc);padding:11px 16px;cursor:pointer;background:var(--card);color:var(--acc)}
+button.p{background:var(--acc);color:var(--accink)}
+button:disabled{opacity:.6;cursor:wait}
+.btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.btns button{flex:1 1 150px}
+.err{background:var(--warnbg);color:var(--err);border-radius:10px;padding:10px 12px;margin:12px 0}
+.st{color:var(--mut);margin:10px 0;text-align:center}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:.92rem}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+td.n,th.n{text-align:right;white-space:nowrap}
+tr.f td{background:var(--warnbg)}
+tfoot td{font-weight:700}
+.b{display:inline-block;border-radius:999px;padding:1px 10px;font-size:.8rem;font-weight:600;white-space:nowrap}
+.b.v{background:var(--okbg);color:var(--ok)}.b.m{background:var(--maybebg);color:var(--maybe)}.b.u{background:var(--uncbg);color:var(--unc)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.stat{background:var(--bg);border-radius:10px;padding:8px;text-align:center}
+.stat b{display:block;font-size:1.05rem}.stat span{font-size:.8rem;color:var(--mut)}
+.ded{border-top:1px solid var(--line);padding:9px 0}
+.ded .h{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-weight:600}
+ul,ol{padding-left:20px;margin:6px 0}li{margin:6px 0}
+.mut{color:var(--mut)}
+#appeal{min-height:300px}
+footer{color:var(--mut);font-size:.85rem;text-align:center;padding:16px 0 24px}
+</style></head><body>
+<div class="wrap">
+<h1>Bill<span>Samjho</span> 🧾</h1>
+<p class="tag">Understand your hospital bill and insurance claim decision in simple words.</p>
+<div class="notice">Use sample or redacted data only while testing. Nothing is saved by this page.</div>
+
+<div class="card">
+<label for="lang">Language / भाषा</label>
+<select id="lang"><option>English</option><option value="Hindi">हिन्दी (Hindi)</option><option value="Bengali">বাংলা (Bengali)</option><option value="Punjabi">ਪੰਜਾਬੀ (Punjabi)</option><option value="Marathi">मराठी (Marathi)</option></select>
+
+<label for="bill">1. Hospital bill <small>(paste the text)</small></label>
+<textarea id="bill" placeholder="Paste the itemised hospital bill here"></textarea>
+<div id="photoRow" hidden><label for="photo">Or upload a photo of the bill <small>(optional)</small></label><input type="file" id="photo" accept="image/*"></div>
+
+<label for="policy">2. Insurance policy terms <small>(optional, paste key clauses)</small></label>
+<textarea id="policy" style="min-height:80px" placeholder="Room rent limit, co-pay, non-payable items, waiting period..."></textarea>
+
+<label for="letter">3. Insurer settlement or rejection letter <small>(optional)</small></label>
+<textarea id="letter" placeholder="Paste the insurer’s decision letter here"></textarea>
+
+<div class="row"><div><label for="rent">Room-rent limit per day (₹) <small>(optional)</small></label><input type="number" id="rent" min="0" inputmode="numeric" placeholder="e.g. 3000"></div></div>
+
+<div class="btns"><button class="p" id="go">Explain my bill</button><button id="demo" type="button">Try sample data</button></div>
+</div>
+
+<div id="st" class="st" hidden></div>
+<div id="er" class="err" role="alert" hidden></div>
+<div id="out"></div>
+
+<footer>Explanation tool only, not legal, medical or insurance advice.</footer>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const inr=n=>{const v=Number(n);return isNaN(v)||n===null||n===""?"?":"₹"+v.toLocaleString("en-IN")};
+const DL={summary:"Summary",items:"Bill line items",ask:"Worth asking the hospital",decision:"Insurer decision",appeal:"Appeal letter draft (edit before using)",steps:"Next steps",unclear:"Unclear or missing",copy:"Copy",copied:"Copied",added:"Total (added up)",stated:"Total on bill",ok:"Matches",bad:"Does not match",paid:"Paid",deducted:"Deducted",claimed:"Claimed",item:"Item",cat:"Category",amt:"Amount",what:"What it is",flag:"Worth asking",disc:"Explanation tool only, not legal, medical or insurance advice."};
+
+const SAMPLE={limit:3000,
+bill:`CITY CARE HOSPITAL, Varanasi - FINAL BILL
+Patient: Ramesh Kumar (sample)   Admission: 12-10-2026   Discharge: 15-10-2026 (3 days)
+1. Room rent - Deluxe room, 3 days x Rs 5,000 = Rs 15,000
+2. Doctor visit charges, 3 days x Rs 1,500 = Rs 4,500
+3. CBC (Complete Blood Count) 13-10-2026 = Rs 450
+4. CBC (Complete Blood Count) 13-10-2026 = Rs 450
+5. Blood sugar test = Rs 200
+6. X-ray chest = Rs 800
+7. Medicines and consumables = Rs 12,350
+8. Nursing charges, 3 days = Rs 2,400
+9. Service charge = Rs 1,800
+10. Registration fee = Rs 500
+11. Miscellaneous charges = Rs 1,500
+TOTAL BILL AMOUNT: Rs 39,950`,
+policy:`Room rent limit: Rs 3,000 per day. If a costlier room is taken, all room-linked expenses (doctor fees, nursing) are paid in the same proportion as the eligible room rent. Registration, service and administrative charges are not payable.`,
+letter:`ABC Health Insurance - Claim Settlement Letter
+Claim No. CLM/2026/778812   Policy No. HP/45/998
+Amount claimed: Rs 39,950   Amount settled: Rs 26,940   Total deducted: Rs 13,010
+Deductions:
+- Room rent above limit (Rs 5,000 taken vs Rs 3,000 eligible per day, 3 days): Rs 6,000
+- Proportionate deduction on doctor visit charges (60% ratio): Rs 1,800
+- Proportionate deduction on nursing charges (60% ratio): Rs 960
+- Registration fee, non-payable: Rs 500
+- Service charge, non-payable: Rs 1,800
+- Miscellaneous charges, non-payable: Rs 1,500
+- Duplicate investigation (CBC): Rs 450`};
+
+$("demo").onclick=()=>{$("bill").value=SAMPLE.bill;$("policy").value=SAMPLE.policy;$("letter").value=SAMPLE.letter;$("rent").value=SAMPLE.limit;};
+
+claude.use("sample").then(async s=>{try{if(s&&(await s.limits()).images)$("photoRow").hidden=false}catch(e){}}).catch(()=>{});
+
+function system(lang){return `You are BillSamjho, a helper that explains Indian hospital bills and health-insurance claim decisions.
+RULES
+- Never accuse the hospital of fraud. Say "worth asking about".
+- Never say a rejection or deduction is definitely right or wrong. Say "may be valid" or "may be disputable because...".
+- Use ONLY the text or photo provided. If something is unclear or missing, list it in "unclear". Never guess amounts, names or policy terms.
+- Report stated_total exactly as printed on the bill (number only, or null).
+- Use simple words at Class 8 reading level and short sentences. Write every human-readable value in ${lang}. Keep JSON keys and the "validity" value in English.
+- Set ask:true for duplicates (same test twice), vague charges (miscellaneous, service charge) and anything unexplained.
+- If a room-rent limit and room rent are given, explain proportionate deduction in 2-3 simple steps using the actual numbers.
+- appeal_letter: polite letter to the Grievance Redressal Officer. Use placeholders [Name], [Policy No.], [Claim No.], [Date], [Hospital Name]. Raise only deductions that may be disputable and ask for written reasons for the rest. No threats, no fraud claims. Write it in ${lang}.
+- next_steps: exactly 4 items in this order: insurer Grievance Redressal Officer, IRDAI Bima Bharosa portal, Insurance Ombudsman, consumer court. Do not quote phone numbers or deadlines; say to check the official website.
+- If no insurer letter is given, insurer_decision and appeal_letter must be null.
+OUTPUT: only one JSON object. No markdown, no code fences. Shape:
+{"summary":"2-3 sentences","stated_total":number|null,"line_items":[{"name":"","amount":number,"category":"room|doctor|tests|medicine|nursing|admin|other","explanation":"one line","ask":true|false}],"questions_to_ask_hospital":[{"item":"","reason":""}],"insurer_decision":null|{"claimed":number,"paid":number,"deducted":number,"plain_explanation":"","deductions":[{"item":"","amount":number,"reason":"","validity":"likely valid|maybe|unclear","validity_text":"label in ${lang}"}]},"appeal_letter":null|"text","next_steps":[{"step":"","detail":""}],"unclear":[""],"labels":{"summary":"","items":"","ask":"","decision":"","appeal":"","steps":"","unclear":"","copy":"","copied":"","added":"","stated":"","ok":"","bad":"","paid":"","deducted":"","claimed":"","item":"","cat":"","amt":"","what":"","flag":"","disc":"translation of: Explanation tool only, not legal, medical or insurance advice."}}
+"labels" = these headings translated into ${lang}.`}
+
+function parse(t){t=String(t||"").trim().replace(/^```(?:json)?\s*/i,"").replace(/```\s*$/,"");const a=t.indexOf("{"),b=t.lastIndexOf("}");if(a<0||b<a)throw new Error("no json");return JSON.parse(t.slice(a,b+1))}
+
+const card=(t,b)=>`<section class="card"><h2>${esc(t)}</h2>${b}</section>`;
+const vcls=v=>/likely/i.test(v)?"v":/maybe/i.test(v)?"m":"u";
+
+function render(d,lang){
+  const L=Object.assign({},DL,lang==="English"?{}:(d.labels||{}));
+  const items=Array.isArray(d.line_items)?d.line_items:[];
+  const sum=items.reduce((a,i)=>a+(Number(i.amount)||0),0);
+  const st=d.stated_total==null?null:Number(d.stated_total);
+  let h=card(L.summary,`<p>${esc(d.summary)}</p>`);
+  if(items.length){
+    const rows=items.map(i=>`<tr class="${i.ask?"f":""}"><td>${i.ask?"⚑ ":""}${esc(i.name)}</td><td>${esc(i.category)}</td><td class="n">${inr(i.amount)}</td><td>${esc(i.explanation)}</td></tr>`).join("");
+    const m=st!=null&&Math.abs(st-sum)<1;
+    h+=card(L.items,`<div class="tw"><table><thead><tr><th>${esc(L.item)}</th><th>${esc(L.cat)}</th><th class="n">${esc(L.amt)}</th><th>${esc(L.what)}</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td colspan="2">${esc(L.added)}</td><td class="n">${inr(sum)}</td><td></td></tr>${st!=null?`<tr><td colspan="2">${esc(L.stated)}</td><td class="n">${inr(st)}</td><td><span class="b ${m?"v":"m"}">${esc(m?L.ok:L.bad)}</span></td></tr>`:""}</tfoot></table></div>`);
+  }
+  const q=Array.isArray(d.questions_to_ask_hospital)?d.questions_to_ask_hospital:[];
+  if(q.length)h+=card(L.ask,`<ul>${q.map(x=>`<li><b>${esc(x.item)}</b><br><span class="mut">${esc(x.reason)}</span></li>`).join("")}</ul>`);
+  const r=d.insurer_decision;
+  if(r){
+    const ds=(r.deductions||[]).map(x=>`<div class="ded"><div class="h"><span>${esc(x.item)}</span><span>${inr(x.amount)} <span class="b ${vcls(x.validity)}">${esc(x.validity_text||x.validity)}</span></span></div><div class="mut">${esc(x.reason)}</div></div>`).join("");
+    h+=card(L.decision,`<div class="stats"><div class="stat"><b>${inr(r.claimed)}</b><span>${esc(L.claimed)}</span></div><div class="stat"><b>${inr(r.paid)}</b><span>${esc(L.paid)}</span></div><div class="stat"><b>${inr(r.deducted)}</b><span>${esc(L.deducted)}</span></div></div><p>${esc(r.plain_explanation)}</p>${ds}`);
+  }
+  if(d.appeal_letter)h+=card(L.appeal,`<textarea id="appeal"></textarea><div class="btns"><button id="cp">${esc(L.copy)}</button></div>`);
+  const ns=Array.isArray(d.next_steps)?d.next_steps:[];
+  if(ns.length)h+=card(L.steps,`<ol>${ns.map(x=>`<li><b>${esc(x.step)}</b><br><span class="mut">${esc(x.detail)}</span></li>`).join("")}</ol>`);
+  const u=Array.isArray(d.unclear)?d.unclear.filter(Boolean):[];
+  if(u.length)h+=card(L.unclear,`<ul>${u.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`);
+  if(lang!=="English"&&d.labels&&d.labels.disc)h+=`<p class="mut" style="text-align:center;font-size:.85rem">${esc(d.labels.disc)}</p>`;
+  $("out").innerHTML=h;
+  const ta=$("appeal");
+  if(ta){ta.value=d.appeal_letter;$("cp").onclick=async()=>{try{await navigator.clipboard.writeText(ta.value)}catch(e){ta.select();document.execCommand("copy")}$("cp").textContent=L.copied;setTimeout(()=>{$("cp").textContent=L.copy},1800)}}
+  $("out").scrollIntoView({behavior:"smooth"});
+}
+
+const showErr=m=>{$("er").textContent=m;$("er").hidden=!m};
+$("go").onclick=async()=>{
+  const bill=$("bill").value.trim(),file=$("photo").files[0],letter=$("letter").value.trim(),policy=$("policy").value.trim(),rent=$("rent").value;
+  const lang=$("lang").value;
+  showErr("");
+  if(!bill&&!file){showErr("Please paste the hospital bill (or upload a photo) first, or tap Try sample data.");return}
+  const btn=$("go");btn.disabled=true;btn.textContent="Working…";$("out").innerHTML="";$("st").hidden=false;$("st").textContent="Reading your documents…";
+  const t0=Date.now();
+  const prompt=system(lang)+"\n\n=== HOSPITAL BILL ===\n"+(bill||"(see attached photo)")+"\n\n=== POLICY TERMS ===\n"+(policy||"(not given)")+"\n\n=== POLICY ROOM-RENT LIMIT PER DAY ===\n"+(rent?("Rs "+rent):"(not given)")+"\n\n=== INSURER LETTER ===\n"+(letter||"(not given)");
+  try{
+    const sample=await claude.use("sample");
+    if(!sample)throw {message:"The AI helper is not available in this view. Please open the page from claude.ai and sign in."};
+    let d=null;
+    for(let i=0;i<2&&!d;i++){
+      const o={cache:false,modelTier:"quick",onText:({text})=>{$("st").textContent="Writing explanation… "+Math.round((Date.now()-t0)/1000)+"s ("+text.length+" characters)"}};
+      if(file)o.images=[file];
+      const res=await sample(i?prompt+"\n\nYour previous reply was not valid JSON. Reply with ONLY the JSON object.":prompt,o);
+      try{d=parse(res.text)}catch(e){}
+    }
+    if(!d)throw {message:"Sorry, the reply could not be read. Please try again."};
+    render(d,lang);
+  }catch(e){
+    const c=e&&e.code;
+    showErr(c==="not_granted"?"Permission to use the AI helper was declined, so I can’t explain the bill.":c==="rate_limited"?"Too many requests right now. Please wait a minute and try again.":(e&&e.message)||"Something went wrong. Please try again.");
+  }finally{btn.disabled=false;btn.textContent="Explain my bill";$("st").hidden=true}
+};
+</script>
+</body></html>
